@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  db:
+    container_name: postgis_server
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: zilant116
+      POSTGRES_DB: hackaton_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db_init:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - backend
+
+  web:
+    build: ./project_back
+    command: ["gunicorn", "-b", "0.0.0.0:5000", "run:app"]
+    depends_on:
+      - db
+    networks:
+      - backend
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    depends_on:
+      - db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: supersecretpassword
+    ports:
+      - "5050:80"
+    networks:
+      - backend
+
+  frontend:
+    build:
+      context: ./EcoMeet
+    ports:
+      - "8080:8080"
+    depends_on:
+      - web
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge
